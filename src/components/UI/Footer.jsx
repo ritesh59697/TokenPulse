@@ -1,34 +1,55 @@
 import React from "react";
-import { Zap } from "lucide-react";
+import { Zap, Wifi, Radio } from "lucide-react";
 import { timeAgo } from "../../utils/format";
 
-export default function Footer({ lastUpdated, error, onRefetch }) {
+export default function Footer({ lastUpdated, error, onRefetch, dataSource, wsConnected }) {
   return (
-    <footer className="border-t border-card-border mt-10 py-6 px-6">
-      <div className="max-w-[1440px] mx-auto flex flex-wrap items-center justify-between gap-4 text-xs text-muted">
-        <div className="flex items-center gap-2">
-          <Zap size={12} className="text-accent" />
-          <span className="font-semibold text-text-secondary">TokenPulse</span>
-          <span>· Powered by CoinGecko API</span>
+    <footer style={{
+      borderTop: "1px solid var(--card-border)",
+      marginTop: 40, padding: "20px 24px",
+      transition: "border-color 0.3s",
+    }}>
+      <div style={{
+        maxWidth: 1440, margin: "0 auto",
+        display: "flex", flexWrap: "wrap",
+        alignItems: "center", justifyContent: "space-between",
+        gap: 12,
+      }}>
+        {/* Left */}
+        <div style={{ display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+            <Zap size={12} style={{ color: "var(--accent)" }} />
+            <span style={{ fontSize: 12, fontWeight: 600, color: "var(--text2)" }}>TokenPulse</span>
+          </div>
+          {dataSource && (
+            <span style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 11, color: "var(--muted)" }}>
+              <Wifi size={10} /> {dataSource}
+            </span>
+          )}
+          <span style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 11, color: wsConnected ? "var(--positive)" : "var(--muted)" }}>
+            <Radio size={10} />
+            {wsConnected ? "Binance WS connected" : "Reconnecting…"}
+          </span>
         </div>
 
-        <div className="flex items-center gap-4">
+        {/* Right */}
+        <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
           {error && (
-            <span className="text-negative flex items-center gap-1">
-              <span className="w-1.5 h-1.5 rounded-full bg-negative" />
+            <span style={{ fontSize: 11, color: "var(--negative)", display: "flex", alignItems: "center", gap: 4 }}>
+              <span style={{ width: 5, height: 5, borderRadius: "50%", background: "var(--negative)", display: "inline-block" }} />
               {error}
             </span>
           )}
           {lastUpdated && (
-            <span className="flex items-center gap-1.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-positive pulse-dot" />
-              Updated {timeAgo(lastUpdated)}
+            <span style={{ fontSize: 11, color: "var(--muted)", display: "flex", alignItems: "center", gap: 5 }}>
+              <span style={{ width: 5, height: 5, borderRadius: "50%", background: "var(--positive)", display: "inline-block", animation: "pulseDot 2s ease-in-out infinite" }} />
+              {timeAgo(lastUpdated)}
             </span>
           )}
-          <button
-            onClick={onRefetch}
-            className="px-3 py-1 rounded-lg border border-card-border text-text-secondary hover:border-accent/50 hover:text-white transition-all"
-          >
+          <button onClick={onRefetch}
+            style={{ padding: "5px 12px", borderRadius: 8, border: "1px solid var(--card-border)", background: "transparent", color: "var(--text2)", fontSize: 11, cursor: "pointer", fontFamily: "inherit", transition: "all 0.2s" }}
+            onMouseEnter={e => { e.currentTarget.style.borderColor = "var(--accent)"; e.currentTarget.style.color = "var(--text1)"; }}
+            onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--card-border)"; e.currentTarget.style.color = "var(--text2)"; }}>
             Refresh
           </button>
         </div>
