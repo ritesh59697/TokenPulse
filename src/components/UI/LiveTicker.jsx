@@ -84,28 +84,11 @@ export default function LiveTicker({ coins, wsPrices, connected, commodities = [
       height: 34, display: "flex", alignItems: "center",
       transition: "background 0.3s, border-color 0.3s",
     }}>
-      {/* LIVE badge */}
-      <div style={{
-        position: "absolute", left: 0, top: 0, bottom: 0, zIndex: 10,
-        display: "flex", alignItems: "center", gap: 5, padding: "0 14px",
-        background: "linear-gradient(90deg, var(--ticker-bg) 65%, transparent 100%)",
-        pointerEvents: "none",
-      }}>
-        <span style={{
-          width: 5, height: 5, borderRadius: "50%",
-          background: connected ? "var(--positive)" : "var(--muted)",
-          boxShadow: connected ? "0 0 6px var(--positive)" : "none",
-          animation: connected ? "livePulse 2s ease-in-out infinite" : "none",
-          display: "inline-block",
-        }} />
-        <span style={{ fontSize: 9, fontWeight: 800, letterSpacing: "0.1em", color: connected ? "var(--positive)" : "var(--muted)" }}>
-          {connected ? "LIVE" : "—"}
-        </span>
-      </div>
+      
 
       {/* Scrolling track */}
       <div style={{
-        display: "flex", alignItems: "center", paddingLeft: 64,
+        display: "flex", alignItems: "center", paddingLeft: 0,
         animation: `tickerMove ${duration}s linear infinite`,
         willChange: "transform", width: "max-content",
       }}>

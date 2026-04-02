@@ -77,7 +77,7 @@ export default function App() {
           </div>
         )}
 
-        <main style={{ position: "relative", zIndex: 10, maxWidth: 1440, margin: "0 auto", padding: "32px 24px", display: "flex", flexDirection: "column", gap: 32 }}>
+        <main className="px-4 sm:px-6 lg:px-8 py-6 sm:py-8" style={{ position: "relative", zIndex: 10, maxWidth: 1440, margin: "0 auto", display: "flex", flexDirection: "column", gap: 32, width: "100%" }}>
           {error && <ErrorBanner message={error} onRetry={refetch} />}
 
           <MarketOverview coins={mergedCoins} global={global} loading={loading} />
@@ -86,7 +86,7 @@ export default function App() {
             <CommoditiesPanel commodities={commodities} loading={commLoading} error={commError} lastUpdated={commUpdated} refetch={commRefetch} />
           </div>
 
-          <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 24 }}>
+          <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,2fr)_minmax(320px,1fr)] gap-6 items-start">
             <PriceChart coins={mergedCoins} onSelectCoin={handleSelectCoin} />
             <GainersLosers coins={mergedCoins} loading={loading} onSelectCoin={handleSelectCoin} />
           </div>

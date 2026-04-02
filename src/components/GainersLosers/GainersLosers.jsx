@@ -37,7 +37,7 @@ function MiniList({ title, coins, positive, icon: Icon, iconColor, loading, onSe
                   <span className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-card text-[8px] font-bold text-muted flex items-center justify-center border border-card-border">{idx + 1}</span>
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="text-[13px] font-semibold text-white truncate group-hover:text-blue-400 transition-colors">{coin.name}</div>
+                  <div className="text-[13px] font-semibold truncate group-hover:text-blue-400 transition-colors" style={{ color: "var(--text1)" }}>{coin.name}</div>
                   <div className="text-[11px] font-mono text-muted">{formatPrice(coin.current_price)}</div>
                 </div>
                 <span className={positive ? "badge-positive" : "badge-negative"}>

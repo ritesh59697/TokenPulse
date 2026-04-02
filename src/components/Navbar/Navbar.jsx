@@ -25,8 +25,8 @@ export default function Navbar({ coins, onSelectCoin, theme, onToggleTheme }) {
       borderBottom: "1px solid var(--card-border)",
       background: isDark ? "rgba(11,15,25,0.88)" : "rgba(240,244,248,0.92)",
       backdropFilter: "blur(20px)",
-      padding: "0 24px", height: 60,
-      display: "flex", alignItems: "center", gap: 16,
+      padding: "12px 16px", minHeight: 60,
+      display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap",
       transition: "background 0.3s, border-color 0.3s",
     }}>
       {/* Logo */}
@@ -45,7 +45,7 @@ export default function Navbar({ coins, onSelectCoin, theme, onToggleTheme }) {
       </a>
 
       {/* Search */}
-      <div style={{ flex: 1, maxWidth: 400, position: "relative" }}>
+      <div style={{ flex: "1 1 240px", maxWidth: 400, minWidth: 0, position: "relative", order: 3 }}>
         <div style={{
           display: "flex", alignItems: "center", gap: 8,
           padding: "8px 12px", borderRadius: 12,
@@ -97,7 +97,7 @@ export default function Navbar({ coins, onSelectCoin, theme, onToggleTheme }) {
       </div>
 
       {/* Right side */}
-      <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 12 }}>
+      <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
 
         {/* Live dot */}
         <div style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 11, color: "var(--text2)" }}>

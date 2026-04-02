@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   Chart as ChartJS, CategoryScale, LinearScale,
   PointElement, LineElement, Filler, Tooltip, Legend,
@@ -23,30 +23,34 @@ const COINS = [
 ];
 
 // ── Custom HTML Tooltip Plugin ──────────────────────────────────────────────
-function getOrCreateTooltip(chart) {
+function getOrCreateTooltip(chart, tooltipTheme) {
   let el = chart.canvas.parentNode.querySelector("#tp-tooltip");
   if (!el) {
     el = document.createElement("div");
     el.id = "tp-tooltip";
-    el.style.cssText = `
-      position:absolute; pointer-events:none; z-index:100;
-      background:var(--card); border:1px solid var(--card-border);
-      border-radius:12px; padding:10px 14px;
-      box-shadow:0 8px 24px rgba(0,0,0,0.25);
-      transition:opacity 0.15s ease, transform 0.15s ease;
-      min-width:160px;
-    `;
     chart.canvas.parentNode.appendChild(el);
   }
+
+  el.style.position = "absolute";
+  el.style.pointerEvents = "none";
+  el.style.zIndex = "100";
+  el.style.background = tooltipTheme.background;
+  el.style.border = `1px solid ${tooltipTheme.border}`;
+  el.style.borderRadius = "12px";
+  el.style.padding = "10px 14px";
+  el.style.boxShadow = "0 8px 24px rgba(0,0,0,0.25)";
+  el.style.transition = "opacity 0.15s ease, transform 0.15s ease";
+  el.style.minWidth = "160px";
+
   return el;
 }
 
-function buildCustomTooltip(activeCoin, marketCoin) {
+function buildCustomTooltip(activeCoin, marketCoin, tooltipTheme) {
   return {
     enabled: false,
     external(context) {
       const { chart, tooltip } = context;
-      const el = getOrCreateTooltip(chart);
+      const el = getOrCreateTooltip(chart, tooltipTheme);
 
       if (tooltip.opacity === 0) {
         el.style.opacity = "0";
@@ -61,12 +65,12 @@ function buildCustomTooltip(activeCoin, marketCoin) {
 
         el.innerHTML = `
           <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-            ${imgSrc ? `<img src="${imgSrc}" style="width:20px;height:20px;border-radius:50%;border:1px solid var(--card-border);" onerror="this.style.display='none'" />` : ""}
-            <span style="font-size:12px;font-weight:700;color:var(--text1);font-family:'DM Sans',sans-serif;">${activeCoin.name}</span>
-            <span style="font-size:10px;color:var(--muted);font-family:'DM Mono',monospace;background:var(--card-border);padding:1px 6px;border-radius:4px;">${activeCoin.label}</span>
+            ${imgSrc ? `<img src="${imgSrc}" style="width:20px;height:20px;border-radius:50%;border:1px solid ${tooltipTheme.border};" onerror="this.style.display='none'" />` : ""}
+            <span style="font-size:12px;font-weight:700;color:${tooltipTheme.textPrimary};font-family:'DM Sans',sans-serif;">${activeCoin.name}</span>
+            <span style="font-size:10px;color:${tooltipTheme.textSecondary};font-family:'DM Mono',monospace;background:${tooltipTheme.badgeBackground};padding:1px 6px;border-radius:4px;">${activeCoin.label}</span>
           </div>
-          <div style="font-size:18px;font-weight:600;color:var(--text1);font-family:'DM Mono',monospace;margin-bottom:4px;">${price}</div>
-          <div style="font-size:11px;color:var(--muted);font-family:'DM Sans',sans-serif;">${date}</div>
+          <div style="font-size:18px;font-weight:600;color:${tooltipTheme.textPrimary};font-family:'DM Mono',monospace;margin-bottom:4px;">${price}</div>
+          <div style="font-size:11px;color:${tooltipTheme.textSecondary};font-family:'DM Sans',sans-serif;">${date}</div>
         `;
       }
 
@@ -94,6 +98,46 @@ export default function PriceChart({ coins }) {
   const [range, setRange]           = useState(RANGES[1]);
   const [history, setHistory]       = useState([]);
   const [loading, setLoading]       = useState(true);
+  const [chartTheme, setChartTheme] = useState(() => ({
+    axisText: "#9CA3AF",
+    grid: "rgba(255,255,255,0.1)",
+    tooltipBackground: "#111827",
+    tooltipBorder: "#1e2d45",
+    tooltipTextPrimary: "#f1f5f9",
+    tooltipTextSecondary: "#9CA3AF",
+    tooltipBadgeBackground: "#1e2d45",
+  }));
+
+  useEffect(() => {
+    const root = document.documentElement;
+
+    const readThemeColors = () => {
+      const styles = getComputedStyle(root);
+      const isLight = root.classList.contains("light");
+      const axisText = isLight ? "#374151" : "#9CA3AF";
+      const tooltipBackground = styles.getPropertyValue("--card").trim() || "#111827";
+      const tooltipBorder = styles.getPropertyValue("--card-border").trim() || "#1e2d45";
+      const tooltipTextPrimary = styles.getPropertyValue("--text1").trim() || "#f1f5f9";
+      const tooltipTextSecondary = isLight ? "#374151" : "#9CA3AF";
+
+      setChartTheme({
+        axisText,
+        grid: isLight ? "rgba(0,0,0,0.08)" : "rgba(255,255,255,0.1)",
+        tooltipBackground,
+        tooltipBorder,
+        tooltipTextPrimary,
+        tooltipTextSecondary,
+        tooltipBadgeBackground: tooltipBorder,
+      });
+    };
+
+    readThemeColors();
+
+    const observer = new MutationObserver(readThemeColors);
+    observer.observe(root, { attributes: true, attributeFilter: ["class"] });
+
+    return () => observer.disconnect();
+  }, []);
 
   const fetchHistory = useCallback(async () => {
     setLoading(true);
@@ -146,32 +190,38 @@ export default function PriceChart({ coins }) {
     interaction: { mode: "index", intersect: false },
     plugins: {
       legend: { display: false },
-      tooltip: buildCustomTooltip(activeCoin, marketCoin),
+      tooltip: buildCustomTooltip(activeCoin, marketCoin, {
+        background: chartTheme.tooltipBackground,
+        border: chartTheme.tooltipBorder,
+        textPrimary: chartTheme.tooltipTextPrimary,
+        textSecondary: chartTheme.tooltipTextSecondary,
+        badgeBackground: chartTheme.tooltipBadgeBackground,
+      }),
     },
     scales: {
       x: {
         grid: { display: false },
         border: { display: false },
-        ticks: { color: "var(--muted)", font: { family: "DM Sans", size: 11 }, maxTicksLimit: 8, maxRotation: 0 },
+        ticks: { color: chartTheme.axisText, font: { family: "DM Sans", size: 11 }, maxTicksLimit: 8, maxRotation: 0 },
       },
       y: {
         position: "right",
-        grid: { color: "rgba(128,128,128,0.06)" },
+        grid: { color: chartTheme.grid },
         border: { display: false },
-        ticks: { color: "var(--muted)", font: { family: "DM Mono", size: 11 }, callback: v => "$" + (v >= 1000 ? (v / 1000).toFixed(1) + "k" : v.toFixed(0)) },
+        ticks: { color: chartTheme.axisText, font: { family: "DM Mono", size: 11 }, callback: v => "$" + (v >= 1000 ? (v / 1000).toFixed(1) + "k" : v.toFixed(0)) },
       },
     },
   };
 
   return (
-    <div className="card p-5 fade-in fade-in-2" style={{ position: "relative" }}>
+    <div className="card p-4 sm:p-5 fade-in fade-in-2" style={{ position: "relative" }}>
       <div style={{ position: "absolute", inset: "0 0 auto 0", height: 1, opacity: 0.4, background: `linear-gradient(90deg, transparent, ${lineColor}, transparent)` }} />
 
       {/* Header */}
       <div style={{ display: "flex", flexWrap: "wrap", alignItems: "flex-start", gap: 16, marginBottom: 24 }}>
         <div style={{ flex: 1, minWidth: 0 }}>
           {/* Coin tabs with logos */}
-          <div style={{ display: "flex", gap: 4, marginBottom: 12 }}>
+          <div style={{ display: "flex", gap: 4, marginBottom: 12, flexWrap: "wrap" }}>
             {COINS.map(c => {
               const mc = coins.find(x => x.id === c.id);
               return (
@@ -195,8 +245,8 @@ export default function PriceChart({ coins }) {
             })}
           </div>
 
-          <div style={{ display: "flex", alignItems: "baseline", gap: 10 }}>
-            <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 28, fontWeight: 600, color: "var(--text1)" }}>
+          <div style={{ display: "flex", alignItems: "baseline", gap: 10, flexWrap: "wrap" }}>
+            <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 28, fontWeight: 600, color: "var(--text1)", wordBreak: "break-word" }}>
               {formatPrice(currentPrice)}
             </span>
             {change24h !== undefined && (
@@ -212,7 +262,7 @@ export default function PriceChart({ coins }) {
         </div>
 
         {/* Range selector */}
-        <div style={{ display: "flex", gap: 2, background: "var(--bg)", borderRadius: 12, padding: 4, border: "1px solid var(--card-border)" }}>
+        <div style={{ display: "flex", gap: 2, background: "var(--bg)", borderRadius: 12, padding: 4, border: "1px solid var(--card-border)", flexWrap: "wrap", width: "fit-content" }}>
           {RANGES.map(r => (
             <button key={r.label} onClick={() => setRange(r)}
               style={{
@@ -230,7 +280,7 @@ export default function PriceChart({ coins }) {
       </div>
 
       {/* Chart */}
-      <div style={{ height: 300, position: "relative" }}>
+      <div style={{ height: 300, position: "relative", width: "100%" }}>
         {loading ? (
           <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
             <RefreshCw size={20} color="var(--accent)" style={{ animation: "spin 1s linear infinite" }} />

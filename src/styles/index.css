@@ -49,6 +49,10 @@ body {
   transition: background-color 0.3s ease, color 0.3s ease;
 }
 
+body, #root {
+  overflow-x: hidden;
+}
+
 /* Scrollbar */
 ::-webkit-scrollbar { width: 5px; height: 5px; }
 ::-webkit-scrollbar-track { background: var(--bg); }
