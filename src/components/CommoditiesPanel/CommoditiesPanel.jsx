@@ -38,7 +38,6 @@ function CommodityCard({ item }) {
           <Loader size={12} style={{ color: item.color, animation: "spin 1s linear infinite", flexShrink: 0 }} />
         ) : item.source ? (
           <div style={{ display: "flex", alignItems: "center", gap: 3 }}>
-            {item.isEstimate && <span style={{ fontSize: 9, color: "var(--muted)", background: "color-mix(in srgb, var(--muted) 15%, transparent)", padding: "1px 5px", borderRadius: 4 }}>EST</span>}
             {item.fromCache && <span style={{ fontSize: 9, color: item.color, background: `${item.color}18`, padding: "1px 5px", borderRadius: 4 }}>CACHED</span>}
           </div>
         ) : null}
@@ -95,7 +94,7 @@ export default function CommoditiesPanel({ commodities, loading, error, lastUpda
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <BarChart2 size={14} style={{ color: "#f59e0b" }} />
           <span style={{ fontSize: 11, fontWeight: 600, color: "var(--text2)", textTransform: "uppercase", letterSpacing: "0.1em" }}>Commodities</span>
-          <span style={{ fontSize: 10, padding: "2px 7px", borderRadius: 5, background: "rgba(245,158,11,0.1)", color: "#f59e0b", border: "1px solid rgba(245,158,11,0.2)", fontWeight: 600 }}>Multi-source</span>
+          <span style={{ fontSize: 10, padding: "2px 7px", borderRadius: 5, background: "rgba(245,158,11,0.1)", color: "#f59e0b", border: "1px solid rgba(245,158,11,0.2)", fontWeight: 600 }}>Alpha Vantage</span>
           {loadingCount > 0 && <span style={{ fontSize: 10, color: "var(--muted)" }}>{availableCount}/{commodities.length} loaded</span>}
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -128,7 +127,7 @@ export default function CommoditiesPanel({ commodities, loading, error, lastUpda
 
       <div style={{ marginTop: 16, borderTop: "1px solid var(--card-border)", paddingTop: 8, display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
         <Database size={10} style={{ color: "var(--muted)" }} />
-        <span style={{ fontSize: 10, color: "var(--muted)" }}>Alpha Vantage · Metals-API · Sequential loading · Cache 3min · Refresh 5min</span>
+        <span style={{ fontSize: 10, color: "var(--muted)" }}>Alpha Vantage commodity and spot feeds · Sequential loading · Cache 3min · Refresh 5min</span>
       </div>
     </div>
   );

@@ -4,13 +4,14 @@ import { useState, useEffect, useCallback, useRef } from "react";
 const AV_KEY = "50UKBOQ7Z4HBZH8N"; // fallback only
 
 // ── COMMODITY DEFINITIONS ───────────────────────────────────────────────────
-// Each commodity lists its primary source + fallback chain
+// Keep labels/units aligned with the actual source so delayed benchmark series
+// are not presented as live spot quotes.
 const COMMODITIES = [
   {
     id: "gold", name: "Gold", symbol: "XAU/USD",
     icon: "🥇", color: "#f59e0b", unit: "per troy oz",
     sources: [
-      { type: "metals_live", metal: "gold" },
+      { type: "av_spot", symbol: "XAU" },
       { type: "av_fx", from: "XAU", to: "USD" },
     ],
   },
@@ -18,7 +19,7 @@ const COMMODITIES = [
     id: "silver", name: "Silver", symbol: "XAG/USD",
     icon: "🥈", color: "#94a3b8", unit: "per troy oz",
     sources: [
-      { type: "metals_live", metal: "silver" },
+      { type: "av_spot", symbol: "XAG" },
       { type: "av_fx", from: "XAG", to: "USD" },
     ],
   },
@@ -26,23 +27,22 @@ const COMMODITIES = [
     id: "oil", name: "Crude Oil", symbol: "WTI",
     icon: "🛢️", color: "#6366f1", unit: "per barrel",
     sources: [
-      { type: "coincap_rate", id: "oil-crude" },
-      { type: "av_commodity", func: "BRENT" },
+      { type: "av_commodity", func: "WTI", interval: "daily" },
+      { type: "av_commodity", func: "BRENT", interval: "daily" },
     ],
   },
   {
-    id: "natgas", name: "Natural Gas", symbol: "NGAS",
+    id: "natgas", name: "Natural Gas", symbol: "Henry Hub",
     icon: "🔥", color: "#3b82f6", unit: "per MMBtu",
     sources: [
-      { type: "av_commodity", func: "NATURAL_GAS" },
+      { type: "av_commodity", func: "NATURAL_GAS", interval: "daily" },
     ],
   },
   {
-    id: "copper", name: "Copper", symbol: "XCU/USD",
-    icon: "🔶", color: "#ea580c", unit: "per lb",
+    id: "copper", name: "Copper", symbol: "COPPER",
+    icon: "🔶", color: "#ea580c", unit: "monthly benchmark",
     sources: [
-      { type: "metals_live", metal: "copper" },
-      { type: "av_fx", from: "XCU", to: "USD" },
+      { type: "av_commodity", func: "COPPER", interval: "monthly" },
     ],
   },
 ];
@@ -61,20 +61,34 @@ function setCache(id, data) {
 }
 
 // ── FETCHERS ────────────────────────────────────────────────────────────────
-async function fetchMetalsLive(metal) {
-  // metals-api.com free tier: gold, silver, platinum, palladium, copper (USD base)
-  const METALS_KEY = ""; // leave blank — metals.live has a free no-key endpoint
-  const res = await fetch(
-    `https://metals-api.com/api/latest?access_key=${METALS_KEY}&base=USD&symbols=${metal.toUpperCase()}`,
-    { signal: AbortSignal.timeout(6000) }
-  );
-  if (!res.ok) throw new Error("metals-api failed");
+function parseNumeric(value) {
+  if (typeof value === "number") return Number.isFinite(value) ? value : null;
+  if (typeof value !== "string") return null;
+
+  const parsed = Number(value.replace(/,/g, "").trim());
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+async function fetchAvSpot(symbol) {
+  const url = `https://www.alphavantage.co/query?function=GOLD_SILVER_SPOT&symbol=${symbol}&apikey=${AV_KEY}`;
+  const res = await fetch(url, { signal: AbortSignal.timeout(8000) });
   const data = await res.json();
-  if (!data.success) throw new Error("metals-api: " + data.error?.type);
-  const rate = data.rates?.[metal.toUpperCase()];
-  if (!rate) throw new Error("no rate");
-  // metals-api returns how many units of metal per 1 USD, so invert
-  return { price: 1 / rate, change_percent: null, source: "Metals-API" };
+
+  const price = parseNumeric(
+    data?.price ??
+    data?.Price ??
+    data?.["spot price"] ??
+    data?.["Spot Price"] ??
+    data?.data?.[0]?.price
+  );
+
+  if (price == null) throw new Error("AV spot: no data");
+
+  return {
+    price,
+    change_percent: null,
+    source: "Alpha Vantage Spot",
+  };
 }
 
 async function fetchAvFX(from, to) {
@@ -92,36 +106,28 @@ async function fetchAvFX(from, to) {
   };
 }
 
-async function fetchAvCommodity(func) {
-  const url = `https://www.alphavantage.co/query?function=${func}&interval=monthly&apikey=${AV_KEY}`;
+async function fetchAvCommodity(func, interval = "daily") {
+  const url = `https://www.alphavantage.co/query?function=${func}&interval=${interval}&apikey=${AV_KEY}`;
   const res = await fetch(url, { signal: AbortSignal.timeout(8000) });
   const data = await res.json();
   const series = data?.data;
   if (!series?.length) throw new Error("AV commodity: no data");
-  const price     = parseFloat(series[0].value) || 0;
-  const prevPrice = parseFloat(series[1]?.value) || 0;
+  const price = parseNumeric(series[0]?.value);
+  const prevPrice = parseNumeric(series[1]?.value);
+  if (price == null) throw new Error("AV commodity: invalid price");
   return {
     price,
     change_percent: prevPrice ? ((price - prevPrice) / prevPrice) * 100 : 0,
-    source: "Alpha Vantage",
+    source: `Alpha Vantage ${func}`,
+    interval,
   };
 }
 
-// Fallback: use rough static estimates when all APIs fail
-// (clearly labeled as estimates so user knows)
-const STATIC_FALLBACK = {
-  gold:   { price: 2300, change_percent: null, source: "estimate" },
-  silver: { price: 27,   change_percent: null, source: "estimate" },
-  oil:    { price: 82,   change_percent: null, source: "estimate" },
-  natgas: { price: 2.1,  change_percent: null, source: "estimate" },
-  copper: { price: 4.3,  change_percent: null, source: "estimate" },
-};
-
 async function fetchFromSource(source) {
   switch (source.type) {
-    case "metals_live":    return await fetchMetalsLive(source.metal);
+    case "av_spot":        return await fetchAvSpot(source.symbol);
     case "av_fx":          return await fetchAvFX(source.from, source.to);
-    case "av_commodity":   return await fetchAvCommodity(source.func);
+    case "av_commodity":   return await fetchAvCommodity(source.func, source.interval);
     default: throw new Error("unknown source");
   }
 }
@@ -140,9 +146,6 @@ async function fetchCommodity(commodity) {
     }
   }
 
-  // All sources failed — use static estimate
-  const fallback = STATIC_FALLBACK[commodity.id];
-  if (fallback) return { ...fallback, isEstimate: true };
   throw new Error("all sources failed");
 }
 
