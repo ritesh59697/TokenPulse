@@ -1,6 +1,6 @@
 # TokenPulse
 
-tokenpulse is a premium, high-fidelity web3 market intelligence dashboard that streams live cryptocurrency valuations, commodity spot prices, and houses an interactive simulated portfolio tracker. designed with glassmorphic aesthetics, micro-animations, and custom ambient glowing themes.
+TokenPulse is a premium, high-fidelity web3 market intelligence dashboard that streams live cryptocurrency valuations, commodity spot prices, and houses an interactive simulated portfolio tracker. designed with glassmorphic aesthetics, micro-animations, and custom ambient glowing themes.
 
 ---
 
