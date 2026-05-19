@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 
-const CG_KEY = "CG-fNpFG1H3N3i2wTTMFUpJsNLp";
+const CG_KEY = process.env.REACT_APP_COINGECKO_KEY || "CG-fNpFG1H3N3i2wTTMFUpJsNLp";
 const CG = "https://api.coingecko.com/api/v3";
 const CG_HEADERS = { "x-cg-demo-api-key": CG_KEY };
 const COINCAP = "https://api.coincap.io/v2";

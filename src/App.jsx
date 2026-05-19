@@ -10,6 +10,7 @@ import SplashScreen from "./components/UI/SplashScreen";
 import TokenModal from "./components/UI/TokenModal";
 import LiveTicker from "./components/UI/LiveTicker";
 import CommoditiesPanel from "./components/CommoditiesPanel/CommoditiesPanel";
+import PortfolioTracker from "./components/Portfolio/PortfolioTracker";
 import { useMarketData } from "./hooks/useMarketData";
 import { useBinanceWS } from "./hooks/useBinanceWS";
 import { useDexScreener } from "./hooks/useDexScreener";
@@ -90,6 +91,8 @@ export default function App() {
             <PriceChart coins={mergedCoins} onSelectCoin={handleSelectCoin} />
             <GainersLosers coins={mergedCoins} loading={loading} onSelectCoin={handleSelectCoin} />
           </div>
+
+          <PortfolioTracker coins={mergedCoins} wsPrices={wsPrices} onSelectCoin={handleSelectCoin} />
 
           <TrendingTokens coins={mergedCoins} dexTokens={dexTokens} dexLoading={dexLoading} loading={loading} onSelectCoin={handleSelectCoin} />
         </main>

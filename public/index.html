@@ -1,6 +1,55 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
+    <script>
+      // Intercept and ignore runtime errors from browser extensions in development
+      (function() {
+        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+          const ignoreExtensionErrors = function(event) {
+            try {
+              const error = event.error;
+              const stack = error && error.stack ? error.stack : '';
+              const filename = event.filename || '';
+              const message = event.message || '';
+              
+              const isExtension = 
+                filename.includes('chrome-extension://') ||
+                stack.includes('chrome-extension://') ||
+                message.includes('chrome-extension://') ||
+                message.includes('fiikommdbeccaicojeoniamnalkfa');
+                
+              if (isExtension) {
+                event.stopImmediatePropagation();
+                console.warn('[TokenPulse] Suppressed browser-extension error to prevent React Overlay crash:', message);
+              }
+            } catch (e) {
+              // Fail-safe
+            }
+          };
+
+          window.addEventListener('error', ignoreExtensionErrors, true);
+          window.addEventListener('unhandledrejection', function(event) {
+            try {
+              const reason = event.reason;
+              const stack = reason && reason.stack ? reason.stack : '';
+              const message = reason && reason.message ? reason.message : '';
+              
+              const isExtension = 
+                stack.includes('chrome-extension://') ||
+                message.includes('chrome-extension://') ||
+                message.includes('fiikommdbeccaicojeoniamnalkfa');
+                
+              if (isExtension) {
+                event.stopImmediatePropagation();
+                console.warn('[TokenPulse] Suppressed browser-extension rejection to prevent React Overlay crash:', message);
+              }
+            } catch (e) {
+              // Fail-safe
+            }
+          }, true);
+        }
+      })();
+    </script>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>TokenPulse — Crypto Analytics</title>
